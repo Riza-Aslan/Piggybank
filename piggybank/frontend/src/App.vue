@@ -571,7 +571,7 @@ const toggleDarkMode = () => {
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
 }
 
-const fetchData = async () => {
+const fetchData = async (silent = false) => {
   loading.value = true
   try {
     const [pRes, tRes, allRes] = await Promise.all([
@@ -583,7 +583,8 @@ const fetchData = async () => {
     recentTransactions.value = tRes.data
     allTransactions.value = allRes.data
   } catch (err) {
-    showError('Verbindung zum Server fehlgeschlagen.')
+    if (!silent) showError('Verbindung zum Server fehlgeschlagen.')
+    throw err
   } finally {
     loading.value = false
   }
@@ -614,8 +615,8 @@ const importData = async (event) => {
     const res = await axios.post(`${baseApiUrl}import`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
-    showSuccess(res.data.message)
     await fetchData()
+    showSuccess(res.data.message)
   } catch (err) {
     showError('Import fehlgeschlagen: ' + (err.response?.data?.detail || 'Unbekannter Fehler'))
   } finally {
@@ -626,13 +627,14 @@ const importData = async (event) => {
 const addPerson = async () => {
   if (!newPersonName.value || txLoading.value) return
   txLoading.value = true
+  const personName = newPersonName.value
   try {
     // Ensure we send correct payload as expected by backend (AccountCreate)
-    await axios.post(`${baseApiUrl}accounts/`, { name: newPersonName.value })
+    await axios.post(`${baseApiUrl}accounts/`, { name: personName })
     await fetchData()
-    showSuccess(`${newPersonName.value} wurde erfolgreich angelegt.`)
     showAddPersonModal.value = false
     newPersonName.value = ''
+    showSuccess(`${personName} wurde erfolgreich angelegt.`)
   } catch (err) {
     showError(err.response?.data?.detail || 'Fehler beim Anlegen. Name evtl. schon vergeben?')
   } finally {
@@ -651,7 +653,6 @@ const executeDeletePerson = async () => {
   
   try {
     await axios.delete(`${baseApiUrl}accounts/${id}`)
-    showSuccess(`Konto von ${name} wurde entfernt.`)
     // UI REAKTIVITÄT: Sofort lokal filtern
     persons.value = persons.value.filter(p => p.id !== id)
     recentTransactions.value = recentTransactions.value.filter(t => t.person_id !== id)
@@ -665,6 +666,7 @@ const executeDeletePerson = async () => {
     // Dann zur Sicherheit neu laden
     await fetchData()
     if (activeChartView.value?.id === id) activeChartView.value = null
+    showSuccess(`Konto von ${name} wurde entfernt.`)
   } catch (err) {
      showError('Fehler beim Löschen des Kontos.')
   }
@@ -702,9 +704,9 @@ const submitTransaction = async () => {
       note: txForm.value.note
     })
     closeTxModal()
-    showSuccess('Buchung erfolgreich gespeichert.')
     await fetchData()
     if (activeChartView.value?.id === activePerson.value.id) viewDetails(activePerson.value)
+    showSuccess('Buchung erfolgreich gespeichert.')
   } catch (err) {
     showError('Fehler beim Speichern der Buchung.')
   } finally {
@@ -723,7 +725,6 @@ const executeDeleteTransaction = async () => {
   
   try {
     await axios.delete(`${baseApiUrl}transactions/${id}`)
-    showSuccess('Buchung entfernt.')
     
     // UI REAKTIVITÄT: Sofort lokal filtern
     recentTransactions.value = recentTransactions.value.filter(t => t.id !== id)
@@ -733,6 +734,7 @@ const executeDeleteTransaction = async () => {
     
     await fetchData()
     if (activeChartView.value) viewDetails(activeChartView.value)
+    showSuccess('Buchung entfernt.')
   } catch (err) {
     showError('Fehler beim Löschen.')
   }
