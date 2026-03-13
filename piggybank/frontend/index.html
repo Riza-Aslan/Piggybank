@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Piggybank</title>
+    <script>
+      // Determine the dynamic base path for Vue Router when running inside HA Ingress.
+      // E.g. /api/hassio_ingress/xyz123/ -> /api/hassio_ingress/xyz123/
+      // This MUST run before Vue init to configure the router.
+      const path = window.location.pathname;
+      window.dynamicBase = path.endsWith('/') ? path : path + '/';
+      
+      // Auto-detect HA dark mode if available based on media query or LocalStorage
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+    <div id="app"></div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
