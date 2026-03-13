@@ -33,11 +33,10 @@ RUN pip3 install --no-cache-dir -r /app/backend/requirements.txt
 
 # Copy source tree for backend
 COPY backend/ /app/backend/
-COPY run.sh /app/
-
 # Copy built frontend assets from stage 1
 COPY --from=frontend-builder /app/frontend/dist /app/backend/static
 
-RUN chmod a+x /app/run.sh
-
-CMD [ "/app/run.sh" ]
+# Register run.sh as s6 service so the base image (s6-overlay) starts it as PID 1
+RUN mkdir -p /etc/services.d/piggybank
+COPY run.sh /etc/services.d/piggybank/run
+RUN chmod a+x /etc/services.d/piggybank/run
