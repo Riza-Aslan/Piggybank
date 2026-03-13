@@ -1,0 +1,17 @@
+# Node.js - never upload local node_modules into the build context
+frontend/node_modules
+frontend/.vite
+frontend/dist
+
+# Test data (SQLite DB used for local testing only)
+piggybank/test_data
+test_data
+
+# Git
+.git
+.gitignore
+
+# Editor/IDE
+.vscode
+*.swp
+*.swo

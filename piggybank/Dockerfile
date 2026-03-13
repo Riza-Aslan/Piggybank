@@ -1,13 +1,15 @@
 ARG BUILD_FROM
-# Stage 1: Build the Vue 3 Frontend
-FROM node:20-alpine AS frontend-builder
-WORKDIR /app/frontend
+# Stage 1: Build the Vue 3 Frontend (optimized for layer caching)
+FROM node:24-alpine AS frontend-builder
+WORKDIR /app
 
-# Provide package.json and install dependencies
+# Copy only dependency files first – Docker caches this layer until package.json changes
 COPY frontend/package*.json ./
-RUN npm install
 
-# Build the frontend application
+# npm ci is faster and reproducible (uses package-lock.json strictly)
+RUN npm ci --quiet
+
+# Now copy the rest of the source and build
 COPY frontend/ ./
 RUN npm run build
 
@@ -34,7 +36,7 @@ RUN pip3 install --no-cache-dir -r /app/backend/requirements.txt
 # Copy source tree for backend
 COPY backend/ /app/backend/
 # Copy built frontend assets from stage 1
-COPY --from=frontend-builder /app/frontend/dist /app/backend/static
+COPY --from=frontend-builder /app/dist /app/backend/static
 
 # Register run.sh as s6 service so the base image (s6-overlay) starts it as PID 1
 RUN mkdir -p /etc/services.d/piggybank
