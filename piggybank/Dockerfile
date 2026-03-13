@@ -15,6 +15,7 @@ RUN npm run build
 
 
 # Stage 2: Final Home Assistant Add-on Image
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.13-alpine3.20
 FROM $BUILD_FROM
 
 # Install Python 3 and SQLite
@@ -42,3 +43,7 @@ COPY --from=frontend-builder /app/dist /app/backend/static
 RUN mkdir -p /etc/services.d/piggybank
 COPY run.sh /etc/services.d/piggybank/run
 RUN chmod a+x /etc/services.d/piggybank/run
+
+# For local testing without s6-overlay, use this as entrypoint:
+# ENTRYPOINT ["/opt/venv/bin/python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8099"]
+# CMD []
