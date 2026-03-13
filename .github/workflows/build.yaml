@@ -27,7 +27,10 @@ jobs:
         uses: home-assistant/builder@master
         with:
           args: |
-            --all \
+            --aarch64 \
+            --amd64 \
+            --armhf \
+            --armv7 \
             --target piggybank \
             --image ghcr.io/${{ github.repository_owner }}/piggybank-{arch} \
             --docker-hub ghcr.io
