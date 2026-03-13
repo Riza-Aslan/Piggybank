@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy only dependency files first – Docker caches this layer until package.json changes
 COPY frontend/package*.json ./
 
-# npm ci is faster and reproducible (uses package-lock.json strictly)
-RUN npm ci --quiet
+# npm install is robust even without a lock file; --no-audit --no-fund skips CI-irrelevant checks
+RUN npm install --no-audit --no-fund
 
 # Now copy the rest of the source and build
 COPY frontend/ ./
