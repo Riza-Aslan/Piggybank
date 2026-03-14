@@ -1,3 +1,6 @@
+# This ARG must be before the first FROM to be available in all stages
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.13-alpine3.20
+
 # Stage 1: Build the Vue 3 Frontend (optimized for layer caching)
 FROM node:24-alpine AS frontend-builder
 WORKDIR /app
@@ -17,7 +20,6 @@ RUN npm run build
 
 
 # Stage 2: Final Home Assistant Add-on Image
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.13-alpine3.20
 FROM $BUILD_FROM
 
 # Install Python 3 and SQLite
