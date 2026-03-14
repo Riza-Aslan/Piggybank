@@ -1,4 +1,3 @@
-ARG BUILD_FROM
 # Stage 1: Build the Vue 3 Frontend (optimized for layer caching)
 FROM node:24-alpine AS frontend-builder
 WORKDIR /app
@@ -10,7 +9,6 @@ COPY frontend/package*.json ./
 # --prefer-offline uses cached packages when available
 # --no-audit --no-fund skips CI-irrelevant checks
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --prefer-offline --no-audit --no-fund || \
     npm install --prefer-offline --no-audit --no-fund
 
 # Now copy the rest of the source and build

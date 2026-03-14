@@ -10,6 +10,11 @@ class TransactionBase(BaseModel):
 class TransactionCreate(TransactionBase):
     person_id: int
 
+class TransactionUpdate(BaseModel):
+    amount: Optional[float] = None
+    note: Optional[str] = None
+    date: Optional[datetime] = None
+
 class Transaction(TransactionBase):
     id: int
     person_id: int

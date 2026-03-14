@@ -218,14 +218,19 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-700/30">
-                <tr v-for="tx in historyTransactions" :key="tx.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors">
+                <tr v-for="tx in historyTransactions" :key="tx.id" 
+                    @click="openEditTxModal(tx)"
+                    class="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors cursor-pointer group">
                   <td class="px-8 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">{{ formatDate(tx.date) }}</td>
                   <td class="px-8 py-4">
                     <span class="inline-flex items-center gap-2 font-bold text-sm">
                        {{ getPersonName(tx.person_id) }}
                     </span>
                   </td>
-                  <td class="px-8 py-4 text-sm text-slate-600 dark:text-slate-400">"{{ tx.note || '-' }}"</td>
+                  <td class="px-8 py-4 text-sm text-slate-600 dark:text-slate-400">
+                    <span class="group-hover:text-indigo-500 transition-colors">"{{ tx.note || '-' }}"</span>
+                    <PencilIcon class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-50 transition-opacity" />
+                  </td>
                   <td class="px-8 py-4 whitespace-nowrap text-right font-black" :class="tx.amount > 0 ? 'text-emerald-500' : 'text-rose-500'">
                     {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount.toFixed(2) }} €
                   </td>
@@ -316,6 +321,13 @@
                        class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all font-bold">
               </div>
 
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Datum (optional)</label>
+                <input type="date" v-model="txForm.date" 
+                       class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all font-bold">
+                <p class="text-xs text-slate-400 mt-1 ml-1">Leer lassen für heutiges Datum</p>
+              </div>
+
               <div class="pt-4 flex flex-col gap-3">
                 <button @click="submitTransaction" :disabled="!txForm.amount || txForm.amount <= 0 || txLoading" 
                         class="w-full py-5 rounded-2xl text-white font-black shadow-xl transition-all active:scale-95 disabled:opacity-50 outline-none"
@@ -391,6 +403,61 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Modal: Edit Transaction -->
+    <Transition name="modal">
+      <div v-if="showEditTxModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeEditTxModal"></div>
+        <div class="relative bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div class="h-2 w-full bg-indigo-500"></div>
+          
+          <div class="p-10">
+            <div class="text-center mb-8">
+              <div class="inline-flex p-4 rounded-3xl mb-4 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600">
+                <PencilIcon class="w-8 h-8" />
+              </div>
+              <h3 class="text-2xl font-black mb-1">Buchung bearbeiten</h3>
+              <p class="text-slate-500">Verwendungszweck und Datum anpassen</p>
+            </div>
+
+            <div class="space-y-6">
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Betrag (€)</label>
+                <div class="relative">
+                  <input type="number" step="0.01" v-model.number="editTxForm.amount" 
+                         class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 pl-12 focus:outline-none transition-all text-2xl font-black">
+                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">€</span>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Verwendungszweck</label>
+                <input type="text" v-model="editTxForm.note" 
+                       placeholder="Verwendungszweck" 
+                       class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all font-bold">
+              </div>
+
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Datum</label>
+                <input type="date" v-model="editTxForm.date" 
+                       class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all font-bold">
+              </div>
+
+              <div class="pt-4 flex flex-col gap-3">
+                <button @click="submitEditTransaction" :disabled="txLoading" 
+                        class="w-full py-5 rounded-2xl text-white font-black shadow-xl shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 outline-none">
+                  <span v-if="txLoading">Speichern...</span>
+                  <span v-else>Änderungen speichern</span>
+                </button>
+                <button @click="closeEditTxModal" class="w-full text-slate-400 font-bold py-2 hover:text-slate-600 transition outline-none">
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -407,7 +474,7 @@ import {
   ChartBarIcon, TrashIcon, ListBulletIcon, XMarkIcon,
   CheckCircleIcon, XCircleIcon, ClockIcon, UserPlusIcon,
   SunIcon, MoonIcon, UserIcon, ArrowDownTrayIcon, ArrowUpTrayIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon, PencilIcon
 } from '@heroicons/vue/24/solid'
 
 // Chart.js imports
@@ -542,12 +609,14 @@ const newPersonName = ref('')
 const nameInput = ref(null)
 const showTxModal = ref(false)
 const activePerson = ref(null)
-const txForm = ref({ type: 'expense', amount: null, note: '' })
+const txForm = ref({ type: 'expense', amount: null, note: '', date: '' })
 const txAmountInput = ref(null)
 const showDeleteModal = ref(false)
 const personToDelete = ref(null)
 const showDeleteTxModal = ref(false)
 const txToDelete = ref(null)
+const showEditTxModal = ref(false)
+const editTxForm = ref({ id: null, amount: null, note: '', date: '' })
 
 // Focus logic
 watch(showAddPersonModal, async (val) => {
@@ -687,7 +756,7 @@ const executeDeletePerson = async () => {
 
 const openTxModal = (person, type = 'expense') => {
   activePerson.value = person
-  txForm.value = { type, amount: null, note: '' }
+  txForm.value = { type, amount: null, note: '', date: '' }
   showTxModal.value = true
 }
 
@@ -710,12 +779,18 @@ const submitTransaction = async () => {
   
   const finalAmount = txForm.value.type === 'expense' ? -Math.abs(txForm.value.amount) : Math.abs(txForm.value.amount)
   
+  const payload = {
+    person_id: activePerson.value.id,
+    amount: finalAmount,
+    note: txForm.value.note
+  }
+  
+  if (txForm.value.date) {
+    payload.date = new Date(txForm.value.date).toISOString()
+  }
+  
   try {
-    await axios.post(`${baseApiUrl}transactions/`, {
-      person_id: activePerson.value.id,
-      amount: finalAmount,
-      note: txForm.value.note
-    })
+    await axios.post(`${baseApiUrl}transactions/`, payload)
     closeTxModal()
     showSuccess('Buchung erfolgreich gespeichert.')
     
@@ -756,6 +831,48 @@ const executeDeleteTransaction = async () => {
     showSuccess('Buchung entfernt.')
   } catch (err) {
     showError('Fehler beim Löschen.')
+  }
+}
+
+const openEditTxModal = (tx) => {
+  editTxForm.value = {
+    id: tx.id,
+    amount: tx.amount,
+    note: tx.note || '',
+    date: tx.date ? tx.date.split('T')[0] : ''
+  }
+  showEditTxModal.value = true
+}
+
+const closeEditTxModal = () => {
+  showEditTxModal.value = false
+  editTxForm.value = { id: null, amount: null, note: '', date: '' }
+}
+
+const submitEditTransaction = async () => {
+  if (!editTxForm.value.id || txLoading.value) return
+  txLoading.value = true
+  
+  try {
+    const updateData = {}
+    if (editTxForm.value.note !== undefined) updateData.note = editTxForm.value.note
+    if (editTxForm.value.date) updateData.date = new Date(editTxForm.value.date).toISOString()
+    if (editTxForm.value.amount !== undefined) updateData.amount = editTxForm.value.amount
+    
+    await axios.put(`${baseApiUrl}transactions/${editTxForm.value.id}`, updateData)
+    closeEditTxModal()
+    showSuccess('Buchung erfolgreich aktualisiert.')
+    
+    try {
+      await fetchData(true)
+      if (activeChartView.value) viewDetails(activeChartView.value)
+    } catch (fetchErr) {
+      console.warn('Daten konnten nicht neu geladen werden:', fetchErr)
+    }
+  } catch (err) {
+    showError('Fehler beim Aktualisieren der Buchung.')
+  } finally {
+    txLoading.value = false
   }
 }
 
