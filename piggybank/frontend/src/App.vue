@@ -261,7 +261,7 @@
               <div>
                 <label for="person-name" class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Name der Person</label>
                 <input id="person-name" ref="nameInput" type="text" v-model="newPersonName" @keyup.enter="addPerson" 
-                       placeholder="z.B. Sandra" 
+                       placeholder="Spitzname" 
                        class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all text-lg font-bold text-slate-900 dark:text-white">
               </div>
               
@@ -302,7 +302,7 @@
               <div>
                 <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Betrag (€)</label>
                 <div class="relative">
-                  <input type="number" step="0.01" v-model.number="txForm.amount" 
+                  <input ref="txAmountInput" type="number" step="0.01" v-model.number="txForm.amount" 
                          :placeholder="txForm.type === 'income' ? 'Taschengeld' : 'Betrag'" 
                          class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 pl-12 focus:outline-none transition-all text-2xl font-black">
                   <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">€</span>
@@ -543,6 +543,7 @@ const nameInput = ref(null)
 const showTxModal = ref(false)
 const activePerson = ref(null)
 const txForm = ref({ type: 'expense', amount: null, note: '' })
+const txAmountInput = ref(null)
 const showDeleteModal = ref(false)
 const personToDelete = ref(null)
 const showDeleteTxModal = ref(false)
@@ -553,6 +554,13 @@ watch(showAddPersonModal, async (val) => {
   if (val) {
     await nextTick()
     nameInput.value?.focus()
+  }
+})
+
+watch(showTxModal, async (val) => {
+  if (val) {
+    await nextTick()
+    txAmountInput.value?.focus()
   }
 })
 

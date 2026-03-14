@@ -4,6 +4,7 @@
   "image": "ghcr.io/riza-aslan/piggybank-{arch}",
   "slug": "piggybank",
   "description": "Taschengeld-Tracker für Familien mit Ingress-Unterstützung und REST API.",
+  "url": "https://github.com/Riza-Aslan/Piggybank",
   "arch": [
     "aarch64",
     "amd64"
@@ -13,6 +14,12 @@
   "init": false,
   "ingress": true,
   "ingress_port": 8099,
+  "ports": {
+    "8099/tcp": 8099
+  },
+  "ports_description": {
+    "8099/tcp": "Piggybank Web Interface & API"
+  },
   "panel_icon": "mdi:piggy-bank",
   "panel_title": "Piggybank",
   "map": [
