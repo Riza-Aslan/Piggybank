@@ -6,8 +6,12 @@ WORKDIR /app
 # Copy only dependency files first – Docker caches this layer until package.json changes
 COPY frontend/package*.json ./
 
-# npm install is robust even without a lock file; --no-audit --no-fund skips CI-irrelevant checks
-RUN npm install --no-audit --no-fund
+# Install dependencies with cache mount for faster rebuilds
+# --prefer-offline uses cached packages when available
+# --no-audit --no-fund skips CI-irrelevant checks
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline --no-audit --no-fund || \
+    npm install --prefer-offline --no-audit --no-fund
 
 # Now copy the rest of the source and build
 COPY frontend/ ./
@@ -30,9 +34,10 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python dependencies with cache mount for faster rebuilds
 COPY backend/requirements.txt /app/backend/
-RUN pip3 install --no-cache-dir -r /app/backend/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install -r /app/backend/requirements.txt
 
 # Copy source tree for backend
 COPY backend/ /app/backend/

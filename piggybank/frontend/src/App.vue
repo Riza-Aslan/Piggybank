@@ -589,7 +589,7 @@ const fetchData = async (silent = false) => {
     allTransactions.value = allRes.data
   } catch (err) {
     if (!silent) showError('Verbindung zum Server fehlgeschlagen.')
-    throw err
+    if (!silent) throw err
   } finally {
     loading.value = false
   }
@@ -710,8 +710,14 @@ const submitTransaction = async () => {
     })
     closeTxModal()
     showSuccess('Buchung erfolgreich gespeichert.')
-    await fetchData()
-    if (activeChartView.value?.id === activePerson.value.id) viewDetails(activePerson.value)
+    
+    // Daten neu laden, aber Fehler hier nicht als Speicherfehler anzeigen
+    try {
+      await fetchData(true) // silent=true, um Fehler-Popup zu vermeiden
+      if (activeChartView.value?.id === activePerson.value.id) viewDetails(activePerson.value)
+    } catch (fetchErr) {
+      console.warn('Daten konnten nicht neu geladen werden:', fetchErr)
+    }
   } catch (err) {
     showError('Fehler beim Speichern der Buchung.')
   } finally {
