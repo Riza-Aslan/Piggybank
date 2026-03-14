@@ -473,6 +473,11 @@ const filteredTransactions = computed(() => {
 const historyTransactions = computed(() => {
   let list = allTransactions.value
   
+  // Filter by selected account
+  if (selectedAccountId.value) {
+    list = list.filter(t => t.person_id === selectedAccountId.value)
+  }
+  
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(t => {
@@ -704,9 +709,9 @@ const submitTransaction = async () => {
       note: txForm.value.note
     })
     closeTxModal()
+    showSuccess('Buchung erfolgreich gespeichert.')
     await fetchData()
     if (activeChartView.value?.id === activePerson.value.id) viewDetails(activePerson.value)
-    showSuccess('Buchung erfolgreich gespeichert.')
   } catch (err) {
     showError('Fehler beim Speichern der Buchung.')
   } finally {
