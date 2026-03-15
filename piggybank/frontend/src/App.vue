@@ -71,8 +71,30 @@
       </div>
       
       <div v-else>
-        <!-- Deleted Global Stats Section as per point 4 -->
+        <!-- Navigation Tabs -->
+        <div class="flex gap-2 mb-8 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
+          <button @click="activeTab = 'dashboard'" 
+                  class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all"
+                  :class="activeTab === 'dashboard' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'">
+            <BanknotesIcon class="w-5 h-5 inline mr-2" />
+            Dashboard
+          </button>
+          <button @click="activeTab = 'recurring'" 
+                  class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all"
+                  :class="activeTab === 'recurring' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'">
+            <ArrowPathIcon class="w-5 h-5 inline mr-2" />
+            Abos
+          </button>
+          <button @click="activeTab = 'yearly'" 
+                  class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all"
+                  :class="activeTab === 'yearly' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'">
+            <CalendarIcon class="w-5 h-5 inline mr-2" />
+            Jahresübersicht
+          </button>
+        </div>
 
+        <!-- Dashboard Tab -->
+        <div v-if="activeTab === 'dashboard'">
         <!-- Section Header -->
         <div class="flex justify-between items-end mb-6">
           <div>
@@ -215,33 +237,154 @@
                   <th class="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Konto</th>
                   <th class="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Zweck</th>
                   <th class="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Betrag</th>
+                  <th class="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Aktion</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-700/30">
                 <tr v-for="tx in historyTransactions" :key="tx.id" 
-                    @click="openEditTxModal(tx)"
-                    class="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors cursor-pointer group">
-                  <td class="px-8 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">{{ formatDate(tx.date) }}</td>
-                  <td class="px-8 py-4">
+                    class="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors group">
+                  <td class="px-8 py-4 whitespace-nowrap text-sm text-slate-500 font-medium cursor-pointer" @click="openEditTxModal(tx)">{{ formatDate(tx.date) }}</td>
+                  <td class="px-8 py-4 cursor-pointer" @click="openEditTxModal(tx)">
                     <span class="inline-flex items-center gap-2 font-bold text-sm">
                        {{ getPersonName(tx.person_id) }}
                     </span>
                   </td>
-                  <td class="px-8 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td class="px-8 py-4 text-sm text-slate-600 dark:text-slate-400 cursor-pointer" @click="openEditTxModal(tx)">
                     <span class="group-hover:text-indigo-500 transition-colors">"{{ tx.note || '-' }}"</span>
                     <PencilIcon class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-50 transition-opacity" />
                   </td>
-                  <td class="px-8 py-4 whitespace-nowrap text-right font-black" :class="tx.amount > 0 ? 'text-emerald-500' : 'text-rose-500'">
+                  <td class="px-8 py-4 whitespace-nowrap text-right font-black cursor-pointer" :class="tx.amount > 0 ? 'text-emerald-500' : 'text-rose-500'" @click="openEditTxModal(tx)">
                     {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount.toFixed(2) }} €
+                  </td>
+                  <td class="px-8 py-4 text-center">
+                    <button @click.stop="confirmDeleteTransaction(tx)" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition opacity-0 group-hover:opacity-100" title="Buchung löschen">
+                      <TrashIcon class="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
                 <tr v-if="historyTransactions.length === 0">
-                  <td colspan="4" class="px-8 py-10 text-center text-slate-400 italic text-sm">Keine Einträge für diese Suche gefunden.</td>
+                  <td colspan="5" class="px-8 py-10 text-center text-slate-400 italic text-sm">Keine Einträge für diese Suche gefunden.</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
+        </div> <!-- End Dashboard Tab -->
+
+        <!-- Recurring Transactions Tab -->
+        <div v-if="activeTab === 'recurring'" class="animate-in fade-in duration-300">
+          <div class="flex justify-between items-end mb-6">
+            <div>
+              <h2 class="text-2xl font-black tracking-tight">Abonnements & Abos</h2>
+              <p class="text-slate-500">Verwalte wiederkehrende Ausgaben</p>
+            </div>
+            <button @click="showAddRecurringModal = true" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-medium shadow-lg shadow-indigo-600/20 transition-all active:scale-95">
+              <PlusIcon class="w-5 h-5" />
+              Neues Abo
+            </button>
+          </div>
+
+          <div v-if="recurringTransactions.length === 0" class="bg-white dark:bg-slate-800 rounded-3xl p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-700">
+            <ArrowPathIcon class="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+            <h3 class="text-xl font-bold mb-2">Keine Abos vorhanden</h3>
+            <p class="text-slate-500">Erstelle ein Abo für wiederkehrende Ausgaben wie Fitnessstudio, Streaming-Dienste, etc.</p>
+          </div>
+
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="rt in recurringTransactions" :key="rt.id" 
+                 class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all">
+              <div class="flex justify-between items-start mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="p-3 rounded-xl" :class="rt.amount < 0 ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500'">
+                    <ArrowPathIcon class="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-lg">{{ rt.note || 'Ohne Notiz' }}</h3>
+                    <p class="text-sm text-slate-500">{{ getPersonName(rt.person_id) }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-1">
+                  <button @click="openEditRecurringModal(rt)" class="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition">
+                    <PencilIcon class="w-4 h-4" />
+                  </button>
+                  <button @click="confirmDeleteRecurring(rt)" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition">
+                    <TrashIcon class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-700">
+                <div>
+                  <span class="text-2xl font-black" :class="rt.amount < 0 ? 'text-rose-500' : 'text-emerald-500'">
+                    {{ rt.amount > 0 ? '+' : '' }}{{ rt.amount.toFixed(2) }} €
+                  </span>
+                  <span class="text-sm text-slate-500 ml-2">{{ getIntervalLabel(rt.interval) }}</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs text-slate-400">Nächste Buchung</span>
+                  <p class="text-sm font-bold">{{ formatDate(rt.next_execution) }}</p>
+                </div>
+              </div>
+              
+              <div class="mt-4 flex items-center gap-2">
+                <span class="text-xs px-2 py-1 rounded-full" :class="rt.active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'">
+                  {{ rt.active ? 'Aktiv' : 'Pausiert' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Yearly Overview Tab -->
+        <div v-if="activeTab === 'yearly'" class="animate-in fade-in duration-300">
+          <div class="flex justify-between items-end mb-6">
+            <div>
+              <h2 class="text-2xl font-black tracking-tight">Jahresübersicht {{ currentYear }}</h2>
+              <p class="text-slate-500">Voraussichtliche Entwicklung der Konten</p>
+            </div>
+            <div class="flex gap-2">
+              <button @click="currentYear--" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <ChevronLeftIcon class="w-5 h-5" />
+              </button>
+              <button @click="currentYear++" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <ChevronRightIcon class="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 overflow-x-auto">
+            <table class="min-w-full">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700">
+                  <th class="py-3 px-4 text-left text-xs font-bold text-slate-400 uppercase">Konto</th>
+                  <th v-for="month in monthNames" :key="month" class="py-3 px-2 text-center text-xs font-bold text-slate-400 uppercase">{{ month }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="person in persons" :key="person.id" class="border-b border-slate-100 dark:border-slate-700/50">
+                  <td class="py-4 px-4 font-bold">{{ person.name }}</td>
+                  <td v-for="(month, idx) in monthNames" :key="month" class="py-4 px-2 text-center">
+                    <div class="text-sm font-black" :class="getYearlyProjection(person.id, idx).balance >= 0 ? 'text-emerald-500' : 'text-rose-500'">
+                      {{ getYearlyProjection(person.id, idx).balance.toFixed(0) }} €
+                    </div>
+                    <div class="text-[10px] text-slate-400">
+                      <span v-if="getYearlyProjection(person.id, idx).income > 0" class="text-emerald-400">+{{ getYearlyProjection(person.id, idx).income.toFixed(0) }}</span>
+                      <span v-if="getYearlyProjection(person.id, idx).expense > 0" class="text-rose-400"> -{{ getYearlyProjection(person.id, idx).expense.toFixed(0) }}</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl">
+            <p class="text-sm text-indigo-600 dark:text-indigo-400">
+              <strong>Hinweis:</strong> Die Prognose basiert auf den bisherigen Durchschnittswerten und den geplanten Abonnements. 
+              Tatsächliche Werte können abweichen.
+            </p>
+          </div>
+        </div>
+
       </div>
     </main>
 
@@ -458,6 +601,110 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Modal: Add Recurring Transaction -->
+    <Transition name="modal">
+      <div v-if="showAddRecurringModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeRecurringModal"></div>
+        <div class="relative bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div class="h-2 w-full bg-indigo-500"></div>
+          <div class="p-10">
+            <div class="text-center mb-8">
+              <div class="inline-flex p-4 rounded-3xl mb-4 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600">
+                <ArrowPathIcon class="w-8 h-8" />
+              </div>
+              <h3 class="text-2xl font-black mb-1">{{ editingRecurring ? 'Abo bearbeiten' : 'Neues Abo' }}</h3>
+              <p class="text-slate-500">Wiederkehrende Buchung einrichten</p>
+            </div>
+
+            <div class="space-y-6">
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Konto</label>
+                <select v-model="recurringForm.person_id" 
+                        class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all font-bold">
+                  <option v-for="p in persons" :key="p.id" :value="p.id">{{ p.name }}</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Betrag (€)</label>
+                <div class="relative">
+                  <input type="number" step="0.01" v-model.number="recurringForm.amount" 
+                         placeholder="-29.99 für Ausgabe" 
+                         class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 pl-12 focus:outline-none transition-all text-2xl font-black">
+                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">€</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Beschreibung</label>
+                <input type="text" v-model="recurringForm.note" 
+                       placeholder="z.B. Fitnessstudio" 
+                       class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all font-bold">
+              </div>
+
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Intervall</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button v-for="intv in intervals" :key="intv.value" 
+                          @click="recurringForm.interval = intv.value"
+                          class="py-3 px-4 rounded-xl font-bold text-sm transition-all border-2"
+                          :class="recurringForm.interval === intv.value ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'">
+                    {{ intv.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2 ml-1">Startdatum</label>
+                <input type="date" v-model="recurringForm.start_date" 
+                       class="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-600 rounded-2xl py-4 px-6 focus:outline-none transition-all font-bold">
+              </div>
+
+              <div class="pt-4 flex flex-col gap-3">
+                <button @click="submitRecurring" :disabled="!recurringForm.amount || !recurringForm.person_id || txLoading" 
+                        class="w-full py-5 rounded-2xl text-white font-black shadow-xl shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 outline-none">
+                  <span v-if="txLoading">Speichern...</span>
+                  <span v-else>{{ editingRecurring ? 'Änderungen speichern' : 'Abo erstellen' }}</span>
+                </button>
+                <button @click="closeRecurringModal" class="w-full text-slate-400 font-bold py-2 hover:text-slate-600 transition outline-none">
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Modal: Delete Recurring -->
+    <Transition name="modal">
+      <div v-if="showDeleteRecurringModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showDeleteRecurringModal = false"></div>
+        <div class="relative bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div class="p-10">
+            <div class="text-center mb-8">
+              <div class="inline-flex p-4 rounded-3xl mb-4 bg-rose-50 dark:bg-rose-900/30 text-rose-600">
+                <TrashIcon class="w-8 h-8" />
+              </div>
+              <h3 class="text-2xl font-black mb-1">Abo löschen</h3>
+              <p class="text-slate-500">Möchtest du dieses Abo wirklich löschen?</p>
+              <div v-if="recurringToDelete" class="mt-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-100 dark:border-slate-700">
+                "{{ recurringToDelete.note }}" ({{ recurringToDelete.amount.toFixed(2) }} € / {{ getIntervalLabel(recurringToDelete.interval) }})
+              </div>
+            </div>
+            <div class="flex flex-col gap-3">
+              <button @click="executeDeleteRecurring" class="w-full py-5 rounded-2xl text-white font-black bg-rose-600 hover:bg-rose-700 shadow-xl shadow-rose-600/20 transition-all active:scale-95">
+                Endgültig löschen
+              </button>
+              <button @click="showDeleteRecurringModal = false; recurringToDelete = null" class="w-full text-slate-400 font-bold py-2 hover:text-slate-600 transition">
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -474,7 +721,8 @@ import {
   ChartBarIcon, TrashIcon, ListBulletIcon, XMarkIcon,
   CheckCircleIcon, XCircleIcon, ClockIcon, UserPlusIcon,
   SunIcon, MoonIcon, UserIcon, ArrowDownTrayIcon, ArrowUpTrayIcon,
-  MagnifyingGlassIcon, PencilIcon
+  MagnifyingGlassIcon, PencilIcon, ArrowPathIcon, CalendarIcon,
+  ChevronLeftIcon, ChevronRightIcon
 } from '@heroicons/vue/24/solid'
 
 // Chart.js imports
@@ -514,6 +762,16 @@ const searchQuery = ref('')
 const filterDateFrom = ref('')
 const filterDateTo = ref('')
 const allTransactions = ref([]) // For history searching
+const activeTab = ref('dashboard')
+const recurringTransactions = ref([])
+const currentYear = ref(new Date().getFullYear())
+const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+const intervals = [
+  { value: 'daily', label: 'Täglich' },
+  { value: 'weekly', label: 'Wöchentlich' },
+  { value: 'monthly', label: 'Monatlich' },
+  { value: 'quarterly', label: 'Quartalsweise' }
+]
 
 // Computed Stats
 const totalBalance = computed(() => persons.value.reduce((acc, p) => acc + (p.balance || 0), 0))
@@ -617,6 +875,11 @@ const showDeleteTxModal = ref(false)
 const txToDelete = ref(null)
 const showEditTxModal = ref(false)
 const editTxForm = ref({ id: null, amount: null, note: '', date: '' })
+const showAddRecurringModal = ref(false)
+const showDeleteRecurringModal = ref(false)
+const recurringToDelete = ref(null)
+const editingRecurring = ref(false)
+const recurringForm = ref({ id: null, person_id: null, amount: null, note: '', interval: 'monthly', start_date: '' })
 
 // Focus logic
 watch(showAddPersonModal, async (val) => {
@@ -656,14 +919,23 @@ const toggleDarkMode = () => {
 const fetchData = async (silent = false) => {
   loading.value = true
   try {
-    const [pRes, tRes, allRes] = await Promise.all([
+    const [pRes, tRes, allRes, rRes] = await Promise.all([
       axios.get(`${baseApiUrl}accounts/`),
       axios.get(`${baseApiUrl}transactions/?limit=50`),
-      axios.get(`${baseApiUrl}transactions/?limit=10000`)
+      axios.get(`${baseApiUrl}transactions/?limit=10000`),
+      axios.get(`${baseApiUrl}recurring/`)
     ])
     persons.value = pRes.data
     recentTransactions.value = tRes.data
     allTransactions.value = allRes.data
+    recurringTransactions.value = rRes.data
+    
+    // Execute due recurring transactions
+    try {
+      await axios.post(`${baseApiUrl}recurring/execute`)
+    } catch (e) {
+      console.warn('Recurring execution check failed:', e)
+    }
   } catch (err) {
     if (!silent) showError('Verbindung zum Server fehlgeschlagen.')
     if (!silent) throw err
@@ -931,6 +1203,159 @@ const showError = (msg) => {
 
 const getPersonName = id => persons.value.find(p => p.id === id)?.name || 'Unbekannt'
 const formatDate = str => str ? format(new Date(str), 'dd.MM.yyyy', { locale: de }) : ''
+
+const getIntervalLabel = (interval) => {
+  const labels = { daily: 'Täglich', weekly: 'Wöchentlich', monthly: 'Monatlich', quarterly: 'Quartalsweise' }
+  return labels[interval] || interval
+}
+
+// Recurring Transaction Functions
+const closeRecurringModal = () => {
+  showAddRecurringModal.value = false
+  editingRecurring.value = false
+  recurringForm.value = { id: null, person_id: persons.value[0]?.id || null, amount: null, note: '', interval: 'monthly', start_date: '' }
+}
+
+const openEditRecurringModal = (rt) => {
+  editingRecurring.value = true
+  recurringForm.value = {
+    id: rt.id,
+    person_id: rt.person_id,
+    amount: rt.amount,
+    note: rt.note || '',
+    interval: rt.interval,
+    start_date: rt.start_date ? rt.start_date.split('T')[0] : ''
+  }
+  showAddRecurringModal.value = true
+}
+
+const submitRecurring = async () => {
+  if (!recurringForm.value.amount || !recurringForm.value.person_id || txLoading.value) return
+  txLoading.value = true
+  
+  const payload = {
+    person_id: recurringForm.value.person_id,
+    amount: recurringForm.value.amount,
+    note: recurringForm.value.note,
+    interval: recurringForm.value.interval,
+    start_date: recurringForm.value.start_date ? new Date(recurringForm.value.start_date).toISOString() : new Date().toISOString(),
+    active: true
+  }
+  
+  try {
+    if (editingRecurring.value && recurringForm.value.id) {
+      await axios.put(`${baseApiUrl}recurring/${recurringForm.value.id}`, payload)
+      showSuccess('Abo erfolgreich aktualisiert.')
+    } else {
+      await axios.post(`${baseApiUrl}recurring/`, payload)
+      showSuccess('Abo erfolgreich erstellt.')
+    }
+    closeRecurringModal()
+    await fetchData(true)
+  } catch (err) {
+    showError('Fehler beim Speichern des Abos.')
+  } finally {
+    txLoading.value = false
+  }
+}
+
+const confirmDeleteRecurring = (rt) => {
+  recurringToDelete.value = rt
+  showDeleteRecurringModal.value = true
+}
+
+const executeDeleteRecurring = async () => {
+  if (!recurringToDelete.value) return
+  const id = recurringToDelete.value.id
+  
+  try {
+    await axios.delete(`${baseApiUrl}recurring/${id}`)
+    recurringTransactions.value = recurringTransactions.value.filter(r => r.id !== id)
+    showDeleteRecurringModal.value = false
+    recurringToDelete.value = null
+    showSuccess('Abo gelöscht.')
+  } catch (err) {
+    showError('Fehler beim Löschen des Abos.')
+  }
+}
+
+// Yearly Overview Functions
+const getYearlyProjection = (personId, monthIndex) => {
+  const now = new Date()
+  const targetMonth = new Date(currentYear.value, monthIndex, 1)
+  
+  // Get actual transactions for this month
+  const monthTxs = allTransactions.value.filter(t => {
+    const txDate = new Date(t.date)
+    return t.person_id === personId && 
+           txDate.getFullYear() === currentYear.value && 
+           txDate.getMonth() === monthIndex
+  })
+  
+  const actualIncome = monthTxs.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0)
+  const actualExpense = Math.abs(monthTxs.filter(t => t.amount < 0).reduce((acc, t) => acc + t.amount, 0))
+  
+  // Get recurring transactions for projection
+  const personRecurring = recurringTransactions.value.filter(r => r.person_id === personId && r.active)
+  let projectedIncome = 0
+  let projectedExpense = 0
+  
+  personRecurring.forEach(r => {
+    if (r.amount > 0) {
+      if (r.interval === 'monthly') projectedIncome += r.amount
+      else if (r.interval === 'quarterly' && monthIndex % 3 === 0) projectedIncome += r.amount
+      else if (r.interval === 'weekly') projectedIncome += r.amount * 4
+      else if (r.interval === 'daily') projectedIncome += r.amount * 30
+    } else {
+      if (r.interval === 'monthly') projectedExpense += Math.abs(r.amount)
+      else if (r.interval === 'quarterly' && monthIndex % 3 === 0) projectedExpense += Math.abs(r.amount)
+      else if (r.interval === 'weekly') projectedExpense += Math.abs(r.amount) * 4
+      else if (r.interval === 'daily') projectedExpense += Math.abs(r.amount) * 30
+    }
+  })
+  
+  // Calculate running balance
+  let balance = 0
+  // Get balance up to start of year
+  const yearStart = new Date(currentYear.value, 0, 1)
+  const priorTxs = allTransactions.value.filter(t => t.person_id === personId && new Date(t.date) < yearStart)
+  balance = priorTxs.reduce((acc, t) => acc + t.amount, 0)
+  
+  // Add up months until target
+  for (let m = 0; m <= monthIndex; m++) {
+    const mTxs = allTransactions.value.filter(t => {
+      const txDate = new Date(t.date)
+      return t.person_id === personId && 
+             txDate.getFullYear() === currentYear.value && 
+             txDate.getMonth() === m
+    })
+    balance += mTxs.reduce((acc, t) => acc + t.amount, 0)
+    
+    // Add projected recurring for future months or current month if past
+    if (targetMonth > now || m === now.getMonth()) {
+      // Already included in actual transactions
+    }
+  }
+  
+  // For future months, add projected recurring
+  if (targetMonth > now) {
+    const monthsAhead = monthIndex - now.getMonth()
+    personRecurring.forEach(r => {
+      let multiplier = 0
+      if (r.interval === 'monthly') multiplier = monthsAhead
+      else if (r.interval === 'quarterly') multiplier = Math.floor(monthsAhead / 3)
+      else if (r.interval === 'weekly') multiplier = monthsAhead * 4
+      else if (r.interval === 'daily') multiplier = monthsAhead * 30
+      balance += r.amount * multiplier
+    })
+  }
+  
+  return {
+    balance,
+    income: actualIncome || projectedIncome,
+    expense: actualExpense || projectedExpense
+  }
+}
 </script>
 
 <style scoped>
