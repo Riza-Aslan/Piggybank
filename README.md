@@ -1,23 +1,54 @@
-# 🐷 Piggybank - Taschengeld-Tracker für Home Assistant
+# 🐷 Piggybank - Gemeinsames Budget-Tracker für Home Assistant
 
 [![Build](https://github.com/Riza-Aslan/Piggybank/actions/workflows/build.yaml/badge.svg)](https://github.com/Riza-Aslan/Piggybank/actions/workflows/build.yaml)
 [![License](https://img.shields.io/github/license/Riza-Aslan/Piggybank)](LICENSE)
 
-Ein modernes Taschengeld-Tracking-System als Home Assistant Add-on. Verwalte die Taschengeld-Konten deiner Familie mit einer schönen, responsiven Web-Oberfläche.
+Ein modernes Budget-Tracking-System als Home Assistant Add-on für Paare und Familien. Verwalte gemeinsame Konten und teile verbleibendes Budget fair auf – damit jeder sein Hobby ohne schlechtes Gewissen genießen kann!
 
 ![Piggybank Screenshot](https://via.placeholder.com/800x400/6366f1/ffffff?text=Piggybank+Dashboard)
 
+## 💡 Use Case
+
+**Das Problem:** Ihr teilt euch Bankkonten und nach allen monatlichen Ausgaben bleibt etwas Geld übrig. Das wollt ihr für eure Hobbies ausgeben – aber wer gibt wie viel aus?
+
+**Die Lösung:** Piggybank! Tragt den verbleibenden Betrag ein, teilt ihn fair auf und jeder kann seinen Teil für Hobbies, Technik, Kosmetik oder was auch immer ausgeben – ganz ohne schlechtes Gewissen. Bezahlt wird einfach per Kreditkarte oder Bar vom gemeinsamen Konto.
+
+### Beispiel
+
+1. Monatlich bleiben nach allen Fixkosten **300€** übrig
+2. Ihr teilt es auf: **150€ für dich**, **150€ für deinen Partner**
+3. Du kaufst dir für **80€** neue Kopfhörer → Dein Budget: **70€**
+4. Dein Partner kauft für **120€** Sportausrüstung → Budget: **30€**
+5. Am Monatsende seht ihr genau, wer wie viel ausgegeben hat
+
+## 🔄 Abonnements (Abos)
+
+Verwalte wiederkehrende Ausgaben wie Streaming-Dienste, Mitgliedschaften oder andere Abonnements. Diese werden automatisch vom Budget abgezogen.
+
+### Unterstützte Intervalle
+
+- **Täglich** - Für tägliche Ausgaben
+- **Wöchentlich** - Für wöchentliche Dienste
+- **Monatlich** - Für monatliche Abonnements (Netflix, Spotify, etc.)
+- **Vierteljährlich** - Für quartalsweise Zahlungen
+
+### Automatische Ausführung
+
+Abonnements werden automatisch ausgeführt, wenn sie fällig sind. Die App prüft regelmäßig und erstellt die entsprechenden Buchungen.
+
 ## ✨ Features
 
-- **Mehrere Konten** - Verwalte separate Konten für jedes Familienmitglied
-- **Einnahmen & Ausgaben** - Buche Taschengeld und Ausgaben mit Notizen
-- **Übersichtliches Dashboard** - Alle Konten auf einen Blick mit aktuellem Saldo
-- **Monatsstatistiken** - Einnahmen und Ausgaben pro Monat
-- **Interaktive Charts** - Visualisiere die Saldo-Entwicklung über Zeit
-- **Historie & Suche** - Durchsuche alle Buchungen, filtere nach Datum und Konto
-- **Dunkelmodus** - Schone deine Augen beim Abend-Check
-- **Import/Export** - Sichere und wiederherstelle deine Daten als JSON
-- **Home Assistant Integration** - REST-Sensoren für Dashboards
+- **👥 Mehrere Konten** - Verwalte separate Konten für dich, deinen Partner oder die ganze Familie
+- **💰 Budget-Zuweisung** - Trage verbleibendes Geld ein und teile es fair auf
+- **📊 Einnahmen & Ausgaben** - Buche Budget-Zuweisungen und Ausgaben mit Notizen
+- **🔄 Abonnements (Abos)** - Verwalte wiederkehrende Ausgaben wie Streaming-Dienste, Mitgliedschaften etc. – werden automatisch vom Budget abgezogen
+- **📈 Jahresübersicht** - Prognostiziere die Budget-Entwicklung über das ganze Jahr
+- **🎨 Übersichtliches Dashboard** - Alle Konten auf einen Blick mit aktuellem Saldo
+- **📉 Monatsstatistiken** - Einnahmen und Ausgaben pro Monat
+- **🔍 Historie & Suche** - Durchsuche alle Buchungen, filtere nach Datum und Konto
+- **🌙 Dunkelmodus** - Schone deine Augen beim Abend-Check
+- **💾 Import/Export** - Sichere und wiederherstelle deine Daten als JSON
+- **🏠 Home Assistant Integration** - REST-Sensoren für Dashboards und Automatisierungen
 
 ## 🚀 Installation als Home Assistant Add-on
 
@@ -74,9 +105,8 @@ http://localhost:8099/api/sensors
 
 ```json
 {
-  "emma": 45.50,
-  "max": 12.75,
-  "lisa": -5.00
+  "ich": 150.00,
+  "partner": 150.00
 }
 ```
 
@@ -89,18 +119,13 @@ rest:
   - scan_interval: 60
     resource: http://localhost:8099/api/sensors
     sensor:
-      - name: "Taschengeld Emma"
-        value_template: "{{ value_json.emma }}"
+      - name: "Mein Hobby-Budget"
+        value_template: "{{ value_json.ich }}"
         unit_of_measurement: "€"
         icon: mdi:piggy-bank
         
-      - name: "Taschengeld Max"
-        value_template: "{{ value_json.max }}"
-        unit_of_measurement: "€"
-        icon: mdi:piggy-bank
-        
-      - name: "Taschengeld Lisa"
-        value_template: "{{ value_json.lisa }}"
+      - name: "Partner Hobby-Budget"
+        value_template: "{{ value_json.partner }}"
         unit_of_measurement: "€"
         icon: mdi:piggy-bank
 ```
@@ -113,36 +138,32 @@ Nach einem Neustart von Home Assistant stehen die Sensoren zur Verfügung.
 
 ```yaml
 type: entities
-title: 🐷 Taschengeld
+title: 🐷 Hobby-Budget
 entities:
-  - entity: sensor.taschengeld_emma
-    name: Emma
-  - entity: sensor.taschengeld_max
-    name: Max
-  - entity: sensor.taschengeld_lisa
-    name: Lisa
+  - entity: sensor.mein_hobby_budget
+    name: Mein Budget
+  - entity: sensor.partner_hobby_budget
+    name: Partner Budget
 ```
 
 #### Schöne Glance-Karte mit Farben
 
 ```yaml
 type: glance
-title: 🐷 Taschengeld
+title: 🐷 Hobby-Budget
 entities:
-  - entity: sensor.taschengeld_emma
-    name: Emma
-  - entity: sensor.taschengeld_max
-    name: Max
-  - entity: sensor.taschengeld_lisa
-    name: Lisa
+  - entity: sensor.mein_hobby_budget
+    name: Mein Budget
+  - entity: sensor.partner_hobby_budget
+    name: Partner Budget
 ```
 
 #### Fortgeschrittene Karte mit bedingten Farben
 
 ```yaml
 type: custom:button-card
-entity: sensor.taschengeld_emma
-name: Emma
+entity: sensor.mein_hobby_budget
+name: Mein Budget
 icon: mdi:piggy-bank
 show_state: true
 state:
@@ -159,29 +180,28 @@ state:
 ```yaml
 type: markdown
 content: |
-  ## 🐷 Taschengeld-Übersicht
+  ## 🐷 Hobby-Budget Übersicht
   
-  | Kind | Kontostand |
-  |------|------------|
-  | Emma | {{ states('sensor.taschengeld_emma') }} € |
-  | Max  | {{ states('sensor.taschengeld_max') }} € |
-  | Lisa | {{ states('sensor.taschengeld_lisa') }} € |
+  | Person | Verfügbares Budget |
+  |--------|-------------------|
+  | Ich    | {{ states('sensor.mein_hobby_budget') }} € |
+  | Partner| {{ states('sensor.partner_hobby_budget') }} € |
 ```
 
-### Automatisierung: Benachrichtigung bei negativem Saldo
+### Automatisierung: Benachrichtigung bei niedrigem Budget
 
 ```yaml
 automation:
-  - alias: "Taschengeld Negativ-Warnung"
+  - alias: "Hobby-Budget Warnung"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.taschengeld_emma
-        below: 0
+        entity_id: sensor.mein_hobby_budget
+        below: 20
     action:
       - service: notify.mobile_app_dein_telefon
         data:
-          title: "🐷 Taschengeld-Warnung"
-          message: "Emma hat ein negatives Kontostand: {{ states('sensor.taschengeld_emma') }} €"
+          title: "🐷 Budget-Warnung"
+          message: "Dein Hobby-Budget ist fast aufgebraucht: {{ states('sensor.mein_hobby_budget') }} €"
 ```
 
 ## 🛠️ Entwicklung
@@ -233,10 +253,17 @@ Piggybank/
 |---------|----------|--------------|
 | GET | `/api/accounts/` | Alle Konten abrufen |
 | POST | `/api/accounts/` | Neues Konto erstellen |
+| GET | `/api/accounts/{id}` | Konto mit Buchungen abrufen |
 | DELETE | `/api/accounts/{id}` | Konto löschen |
 | GET | `/api/transactions/` | Alle Buchungen abrufen |
 | POST | `/api/transactions/` | Neue Buchung erstellen |
+| PUT | `/api/transactions/{id}` | Buchung aktualisieren |
 | DELETE | `/api/transactions/{id}` | Buchung löschen |
+| GET | `/api/recurring/` | Alle Abonnements abrufen |
+| POST | `/api/recurring/` | Neues Abo erstellen |
+| PUT | `/api/recurring/{id}` | Abo aktualisieren |
+| DELETE | `/api/recurring/{id}` | Abo löschen |
+| POST | `/api/recurring/execute` | Fällige Abos ausführen |
 | GET | `/api/sensors` | HA-Sensoren (JSON) |
 | GET | `/api/export` | Daten exportieren |
 | POST | `/api/import` | Daten importieren |
