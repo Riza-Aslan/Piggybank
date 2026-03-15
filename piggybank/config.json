@@ -1,6 +1,6 @@
 {
   "name": "Piggybank",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "image": "ghcr.io/riza-aslan/piggybank-{arch}",
   "slug": "piggybank",
   "description": "Taschengeld-Tracker für Familien mit Ingress-Unterstützung und REST API.",
@@ -22,6 +22,8 @@
   },
   "panel_icon": "mdi:piggy-bank",
   "panel_title": "Piggybank",
+  "icon": "https://raw.githubusercontent.com/Riza-Aslan/Piggybank/main/piggybank/icon.png",
+  "logo": "https://raw.githubusercontent.com/Riza-Aslan/Piggybank/main/piggybank/icon.png",
   "map": [
     "data:rw"
   ],

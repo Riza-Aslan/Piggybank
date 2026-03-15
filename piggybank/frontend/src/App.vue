@@ -919,23 +919,28 @@ const toggleDarkMode = () => {
 const fetchData = async (silent = false) => {
   loading.value = true
   try {
-    const [pRes, tRes, allRes, rRes] = await Promise.all([
+    const [pRes, tRes, allRes] = await Promise.all([
       axios.get(`${baseApiUrl}accounts/`),
       axios.get(`${baseApiUrl}transactions/?limit=50`),
-      axios.get(`${baseApiUrl}transactions/?limit=10000`),
-      axios.get(`${baseApiUrl}recurring/`)
+      axios.get(`${baseApiUrl}transactions/?limit=10000`)
     ])
     persons.value = pRes.data
     recentTransactions.value = tRes.data
     allTransactions.value = allRes.data
-    recurringTransactions.value = rRes.data
     
-    // Execute due recurring transactions
+    // Load recurring transactions separately (may fail if table doesn't exist yet)
     try {
-      await axios.post(`${baseApiUrl}recurring/execute`)
+      const rRes = await axios.get(`${baseApiUrl}recurring/`)
+      recurringTransactions.value = rRes.data
     } catch (e) {
-      console.warn('Recurring execution check failed:', e)
+      console.warn('Recurring transactions not available:', e)
+      recurringTransactions.value = []
     }
+    
+    // Execute due recurring transactions (fire and forget)
+    axios.post(`${baseApiUrl}recurring/execute`).catch(e => {
+      console.warn('Recurring execution check failed:', e)
+    })
   } catch (err) {
     if (!silent) showError('Verbindung zum Server fehlgeschlagen.')
     if (!silent) throw err
