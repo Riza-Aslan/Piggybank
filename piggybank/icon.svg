@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f472b6"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24"/>
+      <stop offset="100%" style="stop-color:#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="slotGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#fdf2f8"/>
+  
+  <!-- Piggy bank body -->
+  <ellipse cx="256" cy="280" rx="160" ry="120" fill="url(#bodyGrad)"/>
+  
+  <!-- Piggy bank head -->
+  <ellipse cx="380" cy="240" rx="70" ry="60" fill="url(#bodyGrad)"/>
+  
+  <!-- Snout -->
+  <ellipse cx="430" cy="250" rx="35" ry="28" fill="#f9a8d4"/>
+  <ellipse cx="420" cy="245" rx="6" ry="8" fill="#be185d"/>
+  <ellipse cx="440" cy="245" rx="6" ry="8" fill="#be185d"/>
+  
+  <!-- Eye -->
+  <circle cx="370" cy="220" r="12" fill="#1e293b"/>
+  <circle cx="367" cy="217" r="4" fill="white"/>
+  
+  <!-- Ear -->
+  <ellipse cx="340" cy="190" rx="25" ry="35" fill="url(#bodyGrad)" transform="rotate(-20 340 190)"/>
+  <ellipse cx="340" cy="190" rx="15" ry="22" fill="#f9a8d4" transform="rotate(-20 340 190)"/>
+  
+  <!-- Coin slot -->
+  <rect x="220" y="155" width="70" height="12" rx="6" fill="url(#slotGrad)"/>
+  
+  <!-- Legs -->
+  <ellipse cx="150" cy="380" rx="25" ry="30" fill="url(#bodyGrad)"/>
+  <ellipse cx="220" cy="385" rx="25" ry="30" fill="url(#bodyGrad)"/>
+  <ellipse cx="290" cy="385" rx="25" ry="30" fill="url(#bodyGrad)"/>
+  <ellipse cx="360" cy="380" rx="25" ry="30" fill="url(#bodyGrad)"/>
+  
+  <!-- Hooves -->
+  <ellipse cx="150" cy="400" rx="20" ry="12" fill="#be185d"/>
+  <ellipse cx="220" cy="405" rx="20" ry="12" fill="#be185d"/>
+  <ellipse cx="290" cy="405" rx="20" ry="12" fill="#be185d"/>
+  <ellipse cx="360" cy="400" rx="20" ry="12" fill="#be185d"/>
+  
+  <!-- Tail (curly) -->
+  <path d="M 100 280 Q 70 260 80 230 Q 90 200 70 190" stroke="url(#bodyGrad)" stroke-width="12" fill="none" stroke-linecap="round"/>
+  
+  <!-- Coin going in -->
+  <ellipse cx="256" cy="140" rx="30" ry="8" fill="url(#coinGrad)"/>
+  <ellipse cx="256" cy="135" rx="30" ry="8" fill="#fcd34d"/>
+  <text x="256" y="140" text-anchor="middle" font-size="14" font-weight="bold" fill="#92400e">€</text>
+  
+  <!-- Sparkles -->
+  <g fill="#fbbf24">
+    <polygon points="120,180 125,190 135,190 127,197 130,207 120,200 110,207 113,197 105,190 115,190"/>
+    <polygon points="400,150 403,157 410,157 405,162 407,169 400,164 393,169 395,162 390,157 397,157"/>
+    <polygon points="180,120 182,125 187,125 183,128 185,133 180,130 175,133 177,128 173,125 178,125"/>
+  </g>
+</svg>

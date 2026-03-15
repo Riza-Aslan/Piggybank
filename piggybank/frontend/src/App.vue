@@ -1312,6 +1312,7 @@ const getYearlyProjection = (personId, monthIndex) => {
       else if (r.interval === 'weekly') projectedIncome += r.amount * 4
       else if (r.interval === 'daily') projectedIncome += r.amount * 30
     } else {
+      // Negative Beträge sind Ausgaben - diese werden vom Guthaben abgezogen
       if (r.interval === 'monthly') projectedExpense += Math.abs(r.amount)
       else if (r.interval === 'quarterly' && monthIndex % 3 === 0) projectedExpense += Math.abs(r.amount)
       else if (r.interval === 'weekly') projectedExpense += Math.abs(r.amount) * 4
@@ -1351,14 +1352,15 @@ const getYearlyProjection = (personId, monthIndex) => {
       else if (r.interval === 'quarterly') multiplier = Math.floor(monthsAhead / 3)
       else if (r.interval === 'weekly') multiplier = monthsAhead * 4
       else if (r.interval === 'daily') multiplier = monthsAhead * 30
+      // r.amount kann positiv (Einnahme) oder negativ (Ausgabe) sein
       balance += r.amount * multiplier
     })
   }
   
   return {
     balance,
-    income: actualIncome || projectedIncome,
-    expense: actualExpense || projectedExpense
+    income: actualIncome + projectedIncome,
+    expense: actualExpense + projectedExpense
   }
 }
 </script>
