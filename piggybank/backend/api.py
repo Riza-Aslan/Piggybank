@@ -130,31 +130,36 @@ def create_recurring_transaction(recurring: schemas.RecurringTransactionCreate, 
     now = datetime.utcnow()
     created_transactions = []
     
+    # Ensure start_date is naive (remove timezone if present) for consistent comparison
+    start_date = recurring.start_date
+    if start_date.tzinfo is not None:
+        start_date = start_date.replace(tzinfo=None)
+    
     # Determine next_execution and whether to create initial transaction
-    if recurring.start_date <= now:
+    if start_date <= now:
         # Start date is in the past or today: create immediate transaction for start_date
         db_transaction = models.Transaction(
             person_id=recurring.person_id,
             amount=recurring.amount,
             note=f"[Abo] {recurring.note}" if recurring.note else "[Abo]",
-            date=recurring.start_date,
+            date=start_date,
             recurring_id=None  # Will be set after recurring transaction is created
         )
         db.add(db_transaction)
         created_transactions.append(db_transaction)
         
         # Next execution should be the next interval after start_date
-        next_execution = calculate_next_execution(recurring.start_date, recurring.interval)
+        next_execution = calculate_next_execution(start_date, recurring.interval)
     else:
         # Start date is in the future: no immediate transaction, next_execution = start_date
-        next_execution = recurring.start_date
+        next_execution = start_date
     
     db_recurring = models.RecurringTransaction(
         person_id=recurring.person_id,
         amount=recurring.amount,
         note=recurring.note,
         interval=recurring.interval,
-        start_date=recurring.start_date,
+        start_date=start_date,
         next_execution=next_execution,
         active=recurring.active
     )
@@ -181,6 +186,13 @@ def update_recurring_transaction(recurring_id: int, recurring: schemas.Recurring
         raise HTTPException(status_code=404, detail="Recurring transaction not found")
     
     update_data = recurring.model_dump(exclude_unset=True)
+    
+    # Convert start_date to naive if it's being updated and has timezone info
+    if "start_date" in update_data and update_data["start_date"] is not None:
+        start_date = update_data["start_date"]
+        if start_date.tzinfo is not None:
+            update_data["start_date"] = start_date.replace(tzinfo=None)
+    
     for key, value in update_data.items():
         setattr(db_recurring, key, value)
     
@@ -207,24 +219,10 @@ def delete_recurring_transaction(recurring_id: int, db: Session = Depends(get_db
 def execute_due_recurring_transactions(db: Session = Depends(get_db)):
     """Execute all due recurring transactions and create actual transactions."""
     now = datetime.utcnow()
-    
-    # DEBUG: Log all active recurring transactions to diagnose issues
-    all_active = db.query(models.RecurringTransaction).filter(models.RecurringTransaction.active == True).all()
-    print(f"\n[DEBUG] === Recurring Execution Debug ===")
-    print(f"[DEBUG] Current UTC time: {now}")
-    print(f"[DEBUG] Active recurring transactions: {len(all_active)}")
-    for rt in all_active:
-        print(f"[DEBUG]   ID={rt.id}, person={rt.person_id}, amount={rt.amount}, interval={rt.interval}, start={rt.start_date}, next_exec={rt.next_execution}, last_exec={rt.last_executed}")
-    
     due_recurring = db.query(models.RecurringTransaction).filter(
         models.RecurringTransaction.active == True,
         models.RecurringTransaction.next_execution <= now
     ).all()
-    
-    print(f"[DEBUG] Due recurring (next_execution <= now): {len(due_recurring)}")
-    for rt in due_recurring:
-        print(f"[DEBUG]   DUE: ID={rt.id}, next_exec={rt.next_execution}")
-    print(f"[DEBUG] === End Debug ===\n")
     
     executed = []
     for rt in due_recurring:
