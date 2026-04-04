@@ -101,7 +101,11 @@ def read_all_transactions(skip: int = 0, limit: int = 1000, db: Session = Depend
 # --- Recurring Transactions (Abos) ---
 
 def calculate_next_execution(start_date: datetime, interval: str, from_date: datetime = None) -> datetime:
-    """Calculate the next execution date based on interval."""
+    """Calculate the next execution date based on interval.
+    
+    If from_date is provided, calculates the execution AFTER that date.
+    Otherwise uses start_date as base.
+    """
     from dateutil.relativedelta import relativedelta
     
     base_date = from_date or start_date
@@ -123,7 +127,27 @@ def create_recurring_transaction(recurring: schemas.RecurringTransactionCreate, 
     if not db_person:
         raise HTTPException(status_code=404, detail="Person not found")
     
-    next_execution = calculate_next_execution(recurring.start_date, recurring.interval)
+    now = datetime.utcnow()
+    created_transactions = []
+    
+    # Determine next_execution and whether to create initial transaction
+    if recurring.start_date <= now:
+        # Start date is in the past or today: create immediate transaction for start_date
+        db_transaction = models.Transaction(
+            person_id=recurring.person_id,
+            amount=recurring.amount,
+            note=f"[Abo] {recurring.note}" if recurring.note else "[Abo]",
+            date=recurring.start_date,
+            recurring_id=None  # Will be set after recurring transaction is created
+        )
+        db.add(db_transaction)
+        created_transactions.append(db_transaction)
+        
+        # Next execution should be the next interval after start_date
+        next_execution = calculate_next_execution(recurring.start_date, recurring.interval)
+    else:
+        # Start date is in the future: no immediate transaction, next_execution = start_date
+        next_execution = recurring.start_date
     
     db_recurring = models.RecurringTransaction(
         person_id=recurring.person_id,
@@ -137,6 +161,13 @@ def create_recurring_transaction(recurring: schemas.RecurringTransactionCreate, 
     db.add(db_recurring)
     db.commit()
     db.refresh(db_recurring)
+    
+    # Update the transaction with the recurring_id if we created one
+    for tx in created_transactions:
+        tx.recurring_id = db_recurring.id
+    if created_transactions:
+        db.commit()
+    
     return db_recurring
 
 @router.get("/recurring/", response_model=List[schemas.RecurringTransaction])
@@ -155,10 +186,9 @@ def update_recurring_transaction(recurring_id: int, recurring: schemas.Recurring
     
     # Recalculate next execution if interval changed
     if "interval" in update_data:
-        db_recurring.next_execution = calculate_next_execution(
-            db_recurring.last_executed or db_recurring.start_date,
-            db_recurring.interval
-        )
+        # Use last_executed if available, otherwise start_date
+        base_date = db_recurring.last_executed or db_recurring.start_date
+        db_recurring.next_execution = calculate_next_execution(base_date, db_recurring.interval)
     
     db.commit()
     db.refresh(db_recurring)
@@ -184,19 +214,19 @@ def execute_due_recurring_transactions(db: Session = Depends(get_db)):
     
     executed = []
     for rt in due_recurring:
-        # Create the actual transaction
+        # Create the actual transaction for the scheduled date (next_execution), not for now
         db_transaction = models.Transaction(
             person_id=rt.person_id,
             amount=rt.amount,
             note=f"[Abo] {rt.note}" if rt.note else "[Abo]",
-            date=now,
+            date=rt.next_execution,  # Use the scheduled execution date
             recurring_id=rt.id
         )
         db.add(db_transaction)
         
-        # Update recurring transaction
-        rt.last_executed = now
-        rt.next_execution = calculate_next_execution(now, rt.interval)
+        # Update recurring transaction: set next_execution to the date after the one we just executed
+        rt.last_executed = rt.next_execution
+        rt.next_execution = calculate_next_execution(rt.next_execution, rt.interval)
         
         executed.append({
             "recurring_id": rt.id,
