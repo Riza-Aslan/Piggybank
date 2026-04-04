@@ -63,7 +63,7 @@ def create_transaction(transaction: schemas.TransactionCreate, db: Session = Dep
     
     tx_data = transaction.model_dump()
     if not tx_data.get('date'):
-        tx_data['date'] = datetime.utcnow()
+        tx_data['date'] = datetime.now()
 
     db_transaction = models.Transaction(**tx_data)
     db.add(db_transaction)
@@ -127,7 +127,7 @@ def create_recurring_transaction(recurring: schemas.RecurringTransactionCreate, 
     if not db_person:
         raise HTTPException(status_code=404, detail="Person not found")
     
-    now = datetime.utcnow()
+    now = datetime.now()
     created_transactions = []
     
     # Ensure start_date is naive (remove timezone if present) for consistent comparison
@@ -218,7 +218,7 @@ def delete_recurring_transaction(recurring_id: int, db: Session = Depends(get_db
 @router.post("/recurring/execute")
 def execute_due_recurring_transactions(db: Session = Depends(get_db)):
     """Execute all due recurring transactions and create actual transactions."""
-    now = datetime.utcnow()
+    now = datetime.now()
     due_recurring = db.query(models.RecurringTransaction).filter(
         models.RecurringTransaction.active == True,
         models.RecurringTransaction.next_execution <= now
@@ -329,7 +329,7 @@ async def import_data_json(file: UploadFile = File(...), db: Session = Depends(g
         if not name:
             continue
             
-        created_at = datetime.fromisoformat(p_data["created_at"]) if p_data.get("created_at") else datetime.utcnow()
+        created_at = datetime.fromisoformat(p_data["created_at"]) if p_data.get("created_at") else datetime.now()
         person = models.Person(name=name, created_at=created_at)
         db.add(person)
         db.commit()
@@ -338,9 +338,9 @@ async def import_data_json(file: UploadFile = File(...), db: Session = Depends(g
         # Add transactions
         for t_data in p_data.get("transactions", []):
             try:
-                dt = datetime.fromisoformat(t_data["date"]) if t_data.get("date") else datetime.utcnow()
+                dt = datetime.fromisoformat(t_data["date"]) if t_data.get("date") else datetime.now()
             except ValueError:
-                dt = datetime.utcnow()
+                dt = datetime.now()
                 
             tx = models.Transaction(
                 person_id=person.id,

@@ -7,6 +7,15 @@ bashio::log.info "==================================================="
 DATA_DIR="/data"
 export DB_PATH="sqlite:///${DATA_DIR}/piggybank.db"
 
+# Use timezone from Home Assistant configuration (TZ environment variable)
+# If not set, default to Europe/Berlin (German timezone)
+if [ -z "$TZ" ]; then
+    export TZ="Europe/Berlin"
+    bashio::log.info "Zeitzone nicht gesetzt, verwende Default: Europe/Berlin"
+else
+    bashio::log.info "Verwende Zeitzone aus Home Assistant: $TZ"
+fi
+
 bashio::log.info "Datenbank wird gespeichert in: ${DB_PATH}"
 
 # Function to execute due recurring transactions using curl

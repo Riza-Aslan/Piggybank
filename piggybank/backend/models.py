@@ -8,7 +8,7 @@ class Person(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
     transactions = relationship("Transaction", back_populates="person_rel", cascade="all, delete-orphan")
     recurring_transactions = relationship("RecurringTransaction", back_populates="person_rel", cascade="all, delete-orphan")
@@ -21,7 +21,7 @@ class Transaction(Base):
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False, index=True)
     amount = Column(Float, nullable=False) # Positive = Income/Taschengeld, Negative = Expense/Ausgabe
     note = Column(String, nullable=True)
-    date = Column(DateTime, default=datetime.utcnow, index=True)
+    date = Column(DateTime, default=datetime.now, index=True)
     recurring_id = Column(Integer, ForeignKey("recurring_transactions.id"), nullable=True, index=True)
 
     person_rel = relationship("Person", back_populates="transactions")
@@ -40,7 +40,7 @@ class RecurringTransaction(Base):
     last_executed = Column(DateTime, nullable=True)
     next_execution = Column(DateTime, nullable=False, index=True)
     active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
     person_rel = relationship("Person", back_populates="recurring_transactions")
     transactions = relationship("Transaction", back_populates="recurring_rel")
