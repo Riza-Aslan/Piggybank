@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2026-04-04
+
+### Fixed
+- Completely prevented infinite restart loop by removing `set -e` and making execute_recurring bulletproof
+- execute_recurring now checks for curl availability and catches all connection errors
+- Background process waits 10 seconds before first check to allow server startup
+- Any error in the recurring check is logged but does not crash the add-on
+
 ## [1.2.3] - 2026-04-04
 
 ### Fixed
