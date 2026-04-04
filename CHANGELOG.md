@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2026-04-04
+
+### Fixed
+- Fixed timezone comparison error when creating/updating recurring transactions
+- The frontend sends timezone-aware ISO strings, but backend uses naive datetimes
+- Now strips tzinfo from incoming dates before comparison/storage
+- This fixes "Fehler beim Speichern des Abos" error when creating abos
+
 ## [1.2.5] - 2026-04-04
 
 ### Added
