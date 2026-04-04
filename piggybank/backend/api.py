@@ -262,6 +262,7 @@ def export_data_json(db: Session = Depends(get_db)):
     data = []
     for p in persons:
         transactions = db.query(models.Transaction).filter(models.Transaction.person_id == p.id).all()
+        recurring = db.query(models.RecurringTransaction).filter(models.RecurringTransaction.person_id == p.id).all()
         data.append({
             "name": p.name,
             "created_at": p.created_at.isoformat() if p.created_at else None,
@@ -271,6 +272,17 @@ def export_data_json(db: Session = Depends(get_db)):
                     "note": t.note,
                     "date": t.date.isoformat() if t.date else None
                 } for t in transactions
+            ],
+            "recurring_transactions": [
+                {
+                    "amount": rt.amount,
+                    "note": rt.note,
+                    "interval": rt.interval,
+                    "start_date": rt.start_date.isoformat(),
+                    "last_executed": rt.last_executed.isoformat() if rt.last_executed else None,
+                    "next_execution": rt.next_execution.isoformat(),
+                    "active": rt.active
+                } for rt in recurring
             ]
         })
     
@@ -296,6 +308,7 @@ async def import_data_json(file: UploadFile = File(...), db: Session = Depends(g
     
     # CLEAR EVERYTHING
     db.query(models.Transaction).delete()
+    db.query(models.RecurringTransaction).delete()
     db.query(models.Person).delete()
     db.commit()
     
@@ -324,6 +337,27 @@ async def import_data_json(file: UploadFile = File(...), db: Session = Depends(g
                 date=dt
             )
             db.add(tx)
+        
+        # Add recurring transactions (Abos)
+        for rt_data in p_data.get("recurring_transactions", []):
+            try:
+                start_date = datetime.fromisoformat(rt_data["start_date"])
+                next_execution = datetime.fromisoformat(rt_data["next_execution"])
+                last_executed = datetime.fromisoformat(rt_data["last_executed"]) if rt_data.get("last_executed") else None
+            except (ValueError, KeyError) as e:
+                raise HTTPException(status_code=400, detail=f"Invalid recurring transaction data: {str(e)}")
+                
+            rt = models.RecurringTransaction(
+                person_id=person.id,
+                amount=rt_data.get("amount", 0.0),
+                note=rt_data.get("note", ""),
+                interval=rt_data.get("interval", "monthly"),
+                start_date=start_date,
+                last_executed=last_executed,
+                next_execution=next_execution,
+                active=rt_data.get("active", True)
+            )
+            db.add(rt)
         
         db.commit()
     
