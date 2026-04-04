@@ -13,7 +13,7 @@ bashio::log.info "Datenbank wird gespeichert in: ${DB_PATH}"
 # Function to execute due recurring transactions using curl
 execute_recurring() {
     bashio::log.info "Prüfe fällige wiederkehrende Transaktionen..."
-    response=$(curl -s -X POST http://localhost:8099/api/recurring/execute)
+    response=$(curl -s -X POST --connect-timeout 5 --max-time 10 http://localhost:8099/api/recurring/execute)
     if [ $? -eq 0 ]; then
         executed=$(echo "$response" | grep -o '"executed":[0-9]*' | cut -d: -f2)
         if [ -n "$executed" ] && [ "$executed" -gt 0 ]; then
@@ -35,14 +35,28 @@ if [ -d "/app/backend" ]; then
 
     # Start recurring transaction checker in background (every 12 hours)
     bashio::log.info "Starte Hintergrundprozess für wiederkehrende Transaktionen (alle 12 Stunden)..."
-    while true; do
-        sleep 43200
-        execute_recurring
-    done &
+    (
+        while true; do
+            sleep 43200
+            execute_recurring
+        done
+    ) &
 
     bashio::log.info "Starte Uvicorn auf Port 8099..."
-    # Use explicit venv path to ensure uvicorn is found regardless of PATH
-    exec /opt/venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8099
+    # Use python3 from PATH (Home Assistant provides it) or fallback to explicit path
+    if [ -x "/opt/venv/bin/python3" ]; then
+        PYTHON_CMD="/opt/venv/bin/python3"
+    else
+        PYTHON_CMD="python3"
+    fi
+    
+    # Check if uvicorn is available
+    if $PYTHON_CMD -c "import uvicorn" 2>/dev/null; then
+        exec $PYTHON_CMD -m uvicorn main:app --host 0.0.0.0 --port 8099
+    else
+        bashio::log.error "Uvicorn ist nicht installiert oder nicht verfügbar!"
+        exit 1
+    fi
 else
     bashio::log.error "FEHLER: Backend-Verzeichnis nicht gefunden. Ist das Projekt vollständig?"
     exit 1
