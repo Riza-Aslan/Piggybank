@@ -388,6 +388,17 @@
       </div>
     </main>
 
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex justify-center items-center gap-2 text-slate-400 text-sm">
+        <span>Made with ❤️ by</span>
+        <a href="https://github.com/Riza-Aslan/Piggybank" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors">
+          Riza-Aslan
+        </a>
+        <span>on GitHub</span>
+      </div>
+    </footer>
+
     <!-- Modal: Add Person -->
     <Transition name="modal">
       <div v-if="showAddPersonModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -538,7 +549,7 @@
                       class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-rose-600/20 active:scale-95 transition-all cursor-pointer">
                 Endgültig löschen
               </button>
-              <button @click="showDeleteTxModal = false; txToDelete = null" class="w-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold py-2 transition-colors cursor-pointer capitalize">
+              <button @click="showDeleteTxModal = false; txToDelete = null" class="w-full text-slate-400 font-bold py-2 hover:text-slate-600 transition outline-none">
                 Abbrechen
               </button>
             </div>
