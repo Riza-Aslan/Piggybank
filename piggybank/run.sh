@@ -1,5 +1,4 @@
 #!/usr/bin/with-contenv bashio
-set -e
 
 bashio::log.info "==================================================="
 bashio::log.info " Starte Piggybank Taschengeld-Tracker Add-on..."
@@ -11,34 +10,41 @@ export DB_PATH="sqlite:///${DATA_DIR}/piggybank.db"
 bashio::log.info "Datenbank wird gespeichert in: ${DB_PATH}"
 
 # Function to execute due recurring transactions using curl
+# This function NEVER fails - it only logs errors
 execute_recurring() {
     bashio::log.info "Prüfe fällige wiederkehrende Transaktionen..."
-    response=$(curl -s -X POST --connect-timeout 5 --max-time 10 http://localhost:8099/api/recurring/execute)
-    if [ $? -eq 0 ]; then
-        executed=$(echo "$response" | grep -o '"executed":[0-9]*' | cut -d: -f2)
-        if [ -n "$executed" ] && [ "$executed" -gt 0 ]; then
-            bashio::log.info "Es wurden $executed wiederkehrende Transaktionen ausgeführt."
-        else
-            bashio::log.info "Keine fälligen wiederkehrenden Transaktionen gefunden."
-        fi
+    # Check if curl is available
+    if ! command -v curl &> /dev/null; then
+        bashio::log.error "curl ist nicht verfügbar! Überspringe wiederkehrende Transaktionen."
+        return 0
+    fi
+    
+    # Try to execute, but never fail
+    response=$(curl -s -X POST --connect-timeout 5 --max-time 10 http://localhost:8099/api/recurring/execute 2>/dev/null) || {
+        bashio::log.warn "Konnte keine Verbindung zu http://localhost:8099/api/recurring/execute herstellen (Server vielleicht noch nicht bereit)."
+        return 0
+    }
+    
+    # Parse response
+    executed=$(echo "$response" | grep -o '"executed":[0-9]*' | cut -d: -f2 2>/dev/null)
+    if [ -n "$executed" ] && [ "$executed" -gt 0 ]; then
+        bashio::log.info "Es wurden $executed wiederkehrende Transaktionen ausgeführt."
     else
-        bashio::log.error "Fehler beim Aufruf der Recurring-Execute API."
+        bashio::log.info "Keine fälligen wiederkehrenden Transaktionen gefunden."
     fi
 }
 
 if [ -d "/app/backend" ]; then
     cd /app/backend
 
-    # Execute due recurring transactions once at startup (catch up missed executions)
-    bashio::log.info "Prüfe beim Start auf ausstehende Abo-Abbuchungen..."
-    execute_recurring
-
     # Start recurring transaction checker in background (every 12 hours)
     bashio::log.info "Starte Hintergrundprozess für wiederkehrende Transaktionen (alle 12 Stunden)..."
     (
+        # Wait a bit for server to start before first check
+        sleep 10
         while true; do
-            sleep 43200
             execute_recurring
+            sleep 43200
         done
     ) &
 
