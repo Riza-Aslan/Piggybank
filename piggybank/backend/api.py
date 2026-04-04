@@ -207,10 +207,24 @@ def delete_recurring_transaction(recurring_id: int, db: Session = Depends(get_db
 def execute_due_recurring_transactions(db: Session = Depends(get_db)):
     """Execute all due recurring transactions and create actual transactions."""
     now = datetime.utcnow()
+    
+    # DEBUG: Log all active recurring transactions to diagnose issues
+    all_active = db.query(models.RecurringTransaction).filter(models.RecurringTransaction.active == True).all()
+    print(f"\n[DEBUG] === Recurring Execution Debug ===")
+    print(f"[DEBUG] Current UTC time: {now}")
+    print(f"[DEBUG] Active recurring transactions: {len(all_active)}")
+    for rt in all_active:
+        print(f"[DEBUG]   ID={rt.id}, person={rt.person_id}, amount={rt.amount}, interval={rt.interval}, start={rt.start_date}, next_exec={rt.next_execution}, last_exec={rt.last_executed}")
+    
     due_recurring = db.query(models.RecurringTransaction).filter(
         models.RecurringTransaction.active == True,
         models.RecurringTransaction.next_execution <= now
     ).all()
+    
+    print(f"[DEBUG] Due recurring (next_execution <= now): {len(due_recurring)}")
+    for rt in due_recurring:
+        print(f"[DEBUG]   DUE: ID={rt.id}, next_exec={rt.next_execution}")
+    print(f"[DEBUG] === End Debug ===\n")
     
     executed = []
     for rt in due_recurring:
